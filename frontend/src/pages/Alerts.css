@@ -1,0 +1,83 @@
+.alerts-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-section);
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-card);
+}
+
+.alert-card {
+  padding: var(--space-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-left: 4px solid transparent;
+}
+
+.border-critical { border-left-color: var(--critical); }
+.border-high { border-left-color: var(--danger); }
+.border-medium { border-left-color: var(--warning); }
+.border-low { border-left-color: var(--success); }
+
+.alert-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.alert-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert-title h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.severity-badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.severity-badge.critical { background: rgba(220, 38, 38, 0.2); color: #f87171; border: 1px solid #dc2626; }
+.severity-badge.high { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid #ef4444; }
+.severity-badge.medium { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid #f59e0b; }
+.severity-badge.low { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid #10b981; }
+
+.alert-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.risk-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: bold;
+  color: var(--danger);
+}
+
+.timestamp {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.alert-body p {
+  margin: 0 0 12px 0;
+  color: var(--text-secondary);
+}
+
+.alert-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}

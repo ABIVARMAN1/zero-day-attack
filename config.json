@@ -1,0 +1,10 @@
+{
+    "dataset_dir": "dataset/",
+    "models_dir": "models/",
+    "output_dir": "output/",
+    "upload_dir": "dataset/uploads",
+    "test_size": 0.2,
+    "random_state": 42,
+    "iso_forest_contamination": 0.01,
+    "xgboost_estimators": 100
+}
