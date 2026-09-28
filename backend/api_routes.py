@@ -1,6 +1,7 @@
 import os
 import json
 import sqlite3
+from reportlab.pdfgen import canvas
 from flask import Blueprint, jsonify, request, send_file
 from datetime import datetime
 from reportlab.pdfgen import canvas
