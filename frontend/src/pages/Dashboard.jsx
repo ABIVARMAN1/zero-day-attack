@@ -200,7 +200,7 @@ const Dashboard = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
 
         {/* Attack Distribution */}
-        <div className="chart-panel fade-in-up delay-2">
+        <div className="chart-panel attack-dist-card fade-in-up delay-2">
           <div className="chart-title">
             <div className="chart-title-dot" style={{ background: '#ef4444', boxShadow: '0 0 6px #ef4444' }} />
             Attack Distribution
@@ -221,14 +221,14 @@ const Dashboard = () => {
         </div>
 
         {/* Health Gauge + Summary */}
-        <div className="chart-panel fade-in-up delay-3" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="chart-panel system-health-card fade-in-up delay-3" style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="chart-title">
             <div className="chart-title-dot" style={{ background: gaugeColor, boxShadow: `0 0 6px ${gaugeColor}` }} />
             System Health Score
           </div>
 
           {/* SVG Gauge */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div className="system-health-gauge" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
             <svg width="180" height="100" viewBox="0 0 180 100">
               {/* Track */}
               <path
@@ -256,11 +256,11 @@ const Dashboard = () => {
           {/* Summary stats */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
             {[
-              { label: 'Detection Rate', value: stats.total_packets > 0 ? `${((stats.detected_attacks + stats.zero_day_attacks) / stats.total_packets * 100).toFixed(1)}%` : '0%', color: '#ef4444' },
-              { label: 'Zero-Day Rate', value: stats.total_packets > 0 ? `${(stats.zero_day_attacks / stats.total_packets * 100).toFixed(2)}%` : '0%', color: '#f59e0b' },
-              { label: 'Normal Traffic', value: stats.total_packets > 0 ? `${(stats.normal_traffic / stats.total_packets * 100).toFixed(1)}%` : '0%', color: '#10b981' },
+              { label: 'Detection Rate', value: stats.total_packets > 0 ? `${((stats.detected_attacks + stats.zero_day_attacks) / stats.total_packets * 100).toFixed(1)}%` : '0%', color: '#ef4444', cls: 'metric-box-detection' },
+              { label: 'Zero-Day Rate', value: stats.total_packets > 0 ? `${(stats.zero_day_attacks / stats.total_packets * 100).toFixed(2)}%` : '0%', color: '#f59e0b', cls: 'metric-box-zeroday' },
+              { label: 'Normal Traffic', value: stats.total_packets > 0 ? `${(stats.normal_traffic / stats.total_packets * 100).toFixed(1)}%` : '0%', color: '#10b981', cls: 'metric-box-normal' },
             ].map(item => (
-              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+              <div key={item.label} className={item.cls} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
                 <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{item.label}</span>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '0.9rem', color: item.color, textShadow: `0 0 10px ${item.color}` }}>
                   {item.value}

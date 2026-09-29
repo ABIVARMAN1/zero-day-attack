@@ -6,15 +6,15 @@
 
 /* Base Light Theme */
 :root[data-theme="light"] {
-  --background: #f8fafc;
-  --surface: #ffffff;
+  --background: #eef3f8;
+  --surface: #f8fafc;
   --surface-secondary: #f1f5f9;
   --surface-hover: #e2e8f0;
   --border: #cbd5e1;
   --text-primary: #0f172a;
-  --text-secondary: #334155;
+  --text-secondary: #475569;
   --text-muted: #64748b;
-  --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
   --chart-grid: #e2e8f0;
   --chart-text: #475569;
 }
@@ -1425,5 +1425,63 @@ body::after {
 :root[data-glass="false"] {
   --glass-bg: var(--surface);
   --glass-bg-strong: var(--surface);
+}
+
+/* ============================
+   DASHBOARD IMPROVEMENTS
+   ============================ */
+
+.system-health-card {
+    position: relative;
+    overflow: visible !important;
+    min-height: 445px;
+}
+
+.system-health-gauge {
+    position: relative;
+    width: 100%;
+    min-height: 155px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+.system-health-gauge svg {
+    display: block;
+    max-width: 100%;
+    overflow: visible;
+}
+
+:root[data-theme="light"] .dashboard-card,
+:root[data-theme="light"] .chart-panel {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+:root[data-theme="light"] .system-health-card {
+    background: linear-gradient(135deg, #f8fafc, #eef6f5);
+}
+
+:root[data-theme="light"] .attack-dist-card {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 1px solid #cbd5e1;
+}
+
+:root[data-theme="light"] .metric-box-detection {
+    background: linear-gradient(135deg, #fff1f2, #fff7f7) !important;
+    border: 1px solid #fecaca !important;
+}
+
+:root[data-theme="light"] .metric-box-zeroday {
+    background: linear-gradient(135deg, #fff7ed, #fffbeb) !important;
+    border: 1px solid #fed7aa !important;
+}
+
+:root[data-theme="light"] .metric-box-normal {
+    background: linear-gradient(135deg, #ecfdf5, #f0fdf4) !important;
+    border: 1px solid #a7f3d0 !important;
 }
 
