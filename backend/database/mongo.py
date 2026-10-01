@@ -38,13 +38,31 @@ def get_mongo_db():
 
 def is_mongo_available():
     """Check if MongoDB is configured and reachable."""
+    print(f"MongoDB diagnostics: MONGODB_URI configured: {bool(MONGODB_URI)}")
     if not MONGODB_URI:
         return False
+        
+    try:
+        # Extract host safely without password for logging
+        import urllib.parse
+        parsed = urllib.parse.urlparse(MONGODB_URI)
+        host = parsed.hostname
+        db_name = parsed.path.strip('/') if parsed.path else 'default'
+        print(f"MongoDB diagnostics: host detected: {host}")
+        print(f"MongoDB diagnostics: database detected: {db_name}")
+    except Exception as e:
+        print(f"MongoDB diagnostics: failed to parse URI securely: {type(e).__name__}")
+        
     try:
         client = get_mongo_client()
         client.admin.command("ping")
         return True
-    except Exception:
+    except Exception as e:
+        print("MongoDB health check failed:")
+        print(f"type={type(e).__name__}")
+        # Make sure not to print the actual MONGODB_URI inside the exception string
+        safe_msg = str(e).replace(MONGODB_URI, "<REDACTED_URI>") if MONGODB_URI else str(e)
+        print(f"message={safe_msg}")
         return False
 
 def get_users_collection():
