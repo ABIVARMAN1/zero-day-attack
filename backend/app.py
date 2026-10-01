@@ -76,7 +76,12 @@ def get_predictor():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({"message": "Backend is running!", "status": "ok"})
+    version = os.environ.get("RENDER_GIT_COMMIT", os.environ.get("APP_VERSION", "unknown"))
+    return jsonify({
+        "message": "Backend is running!",
+        "status": "ok",
+        "version": version
+    })
 
 @app.route('/api/health/db', methods=['GET'])
 def health_db_check():
