@@ -31,7 +31,7 @@ const History = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${"$"}{API_BASE_URL}/api/history`, { withCredentials: true });
+      const response = await axios.get(`${API_BASE_URL}/api/history`, { withCredentials: true });
       const records = response.data.history || [];
       const mapped = records.map(row => {
         let status = 'Normal';

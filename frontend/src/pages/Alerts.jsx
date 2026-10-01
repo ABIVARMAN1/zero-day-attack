@@ -16,7 +16,7 @@ const Alerts = () => {
     const fetchAlerts = async () => {
         try {
             setLoading(true);
-            const res = await axios.get(`${"$"}{API_BASE_URL}/api/alerts`, { withCredentials: true });
+            const res = await axios.get(`${API_BASE_URL}/api/alerts`, { withCredentials: true });
             if (res.data.success) {
                 setAlerts(res.data.alerts);
             }
@@ -41,7 +41,7 @@ const Alerts = () => {
     const handleInvestigate = async (alert) => {
         // Create an investigation and navigate to it
         try {
-            const res = await axios.post(`${"$"}{API_BASE_URL}/api/investigations`, { alert_id: alert.id }, { withCredentials: true });
+            const res = await axios.post(`${API_BASE_URL}/api/investigations`, { alert_id: alert.id }, { withCredentials: true });
             if (res.data.success) {
                 navigate('/investigations');
             }

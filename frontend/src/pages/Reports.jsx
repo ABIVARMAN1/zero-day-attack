@@ -18,7 +18,7 @@ const Reports = () => {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${"$"}{API_BASE_URL}/api/reports`, { withCredentials: true });
+      const res = await axios.get(`${API_BASE_URL}/api/reports`, { withCredentials: true });
       if (res.data.success) {
         setReports(res.data.reports);
       }
@@ -37,7 +37,7 @@ const Reports = () => {
 
     try {
       setGenerating(true);
-      const res = await axios.post(`${"$"}{API_BASE_URL}/api/reports`, {
+      const res = await axios.post(`${API_BASE_URL}/api/reports`, {
         report_type: reportType,
         timeframe: timeframe
       }, { withCredentials: true });

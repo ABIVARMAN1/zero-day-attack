@@ -24,7 +24,7 @@ const Sidebar = () => {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        await axios.get(`${"$"}{API_BASE_URL}/api/health`, { timeout: 2000 });
+        await axios.get(`${API_BASE_URL}/api/health`, { timeout: 2000 });
         setBackendOnline(true);
       } catch { setBackendOnline(false); }
     };

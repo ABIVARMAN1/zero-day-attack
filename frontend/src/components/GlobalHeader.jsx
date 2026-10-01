@@ -39,7 +39,7 @@ const GlobalHeader = () => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get(`${"$"}{API_BASE_URL}/api/notifications`, { withCredentials: true });
+      const res = await axios.get(`${API_BASE_URL}/api/notifications`, { withCredentials: true });
       if (res.data.success) {
         setNotifications(res.data.notifications);
       }

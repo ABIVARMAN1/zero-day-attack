@@ -12,7 +12,7 @@ const Investigations = () => {
 
     const fetchInvestigations = async () => {
         try {
-            const res = await axios.get(`${"$"}{API_BASE_URL}/api/investigations`, { withCredentials: true });
+            const res = await axios.get(`${API_BASE_URL}/api/investigations`, { withCredentials: true });
             if (res.data.success) {
                 setInvestigations(res.data.investigations);
             }

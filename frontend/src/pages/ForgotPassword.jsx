@@ -13,7 +13,7 @@ const ForgotPassword = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post(`${"$"}{API_BASE_URL}/api/auth/password/forgot`, { email });
+            await axios.post(`${API_BASE_URL}/api/auth/password/forgot`, { email });
             toast.success('If an account exists, a reset link has been sent.');
         } catch (error) {
             // Ignore errors for security to prevent email enumeration

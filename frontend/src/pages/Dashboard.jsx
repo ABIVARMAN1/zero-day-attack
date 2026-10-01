@@ -46,15 +46,22 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorType, setErrorType] = useState(null);
 
   const fetchStats = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
     try {
-      const response = await axios.get(`${"$"}{API_BASE_URL}/dashboard`);
+      const response = await axios.get(`${API_BASE_URL}/api/statistics`, { withCredentials: true });
       setStats(response.data);
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Error fetching dashboard stats', error);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setErrorType('auth');
+      } else {
+        setErrorType('connection');
+      }
+      setStats(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -77,6 +84,18 @@ const Dashboard = () => {
   }
 
   if (!stats) {
+    if (errorType === 'auth') {
+      return (
+        <div className="loading-center">
+          <FaExclamationTriangle style={{ fontSize: '3rem', color: 'var(--neon-orange)', opacity: 0.8 }} />
+          <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '1rem' }}>
+            <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--neon-orange)' }}>Authentication Required</div>
+            <div style={{ fontSize: '0.85rem' }}>Your session may have expired. Please log in again.</div>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="loading-center">
         <FaExclamationTriangle style={{ fontSize: '3rem', color: 'var(--neon-red)', opacity: 0.5 }} />

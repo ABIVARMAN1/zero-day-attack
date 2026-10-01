@@ -36,7 +36,7 @@ const Settings = () => {
     useEffect(() => {
         const fetchHistory = async () => {
             try {
-                const res = await axios.get(`${"$"}{API_BASE_URL}/api/auth/login_history`);
+                const res = await axios.get(`${API_BASE_URL}/api/auth/login_history`);
                 setLoginHistory(res.data.history);
             } catch (err) {
                 console.error("Failed to fetch history");
@@ -52,7 +52,7 @@ const Settings = () => {
         }
         setChangingPassword(true);
         try {
-            await axios.post(`${"$"}{API_BASE_URL}/api/auth/password/change`, {
+            await axios.post(`${API_BASE_URL}/api/auth/password/change`, {
                 current_password: currentPassword,
                 new_password: newPassword
             });
@@ -69,7 +69,7 @@ const Settings = () => {
 
     const startMfaSetup = async () => {
         try {
-            const res = await axios.post(`${"$"}{API_BASE_URL}/api/auth/mfa/setup`);
+            const res = await axios.post(`${API_BASE_URL}/api/auth/mfa/setup`);
             setMfaSetupData(res.data);
         } catch (err) {
             toast.error("Failed to initiate MFA setup.");
@@ -80,7 +80,7 @@ const Settings = () => {
         e.preventDefault();
         setEnablingMfa(true);
         try {
-            await axios.post(`${"$"}{API_BASE_URL}/api/auth/mfa/enable`, {
+            await axios.post(`${API_BASE_URL}/api/auth/mfa/enable`, {
                 secret: mfaSetupData.secret,
                 code: mfaCode
             });
@@ -99,7 +99,7 @@ const Settings = () => {
         e.preventDefault();
         setDisablingMfa(true);
         try {
-            await axios.post(`${"$"}{API_BASE_URL}/api/auth/mfa/disable`, {
+            await axios.post(`${API_BASE_URL}/api/auth/mfa/disable`, {
                 password: disableMfaPassword
             });
             toast.success("MFA Disabled successfully.");

@@ -13,7 +13,7 @@ const ModelPerformance = () => {
 
   const fetchModels = async () => {
     try {
-      const res = await axios.get(`${"$"}{API_BASE_URL}/api/models`, { withCredentials: true });
+      const res = await axios.get(`${API_BASE_URL}/api/models`, { withCredentials: true });
       if (res.data.success) {
         setModels(res.data.models);
       }

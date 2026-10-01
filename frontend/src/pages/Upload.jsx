@@ -57,7 +57,7 @@ const Upload = () => {
     setError(null);
     setResults(null);
     try {
-      const response = await axios.post(`${"$"}{API_BASE_URL}/upload`, formData, {
+      const response = await axios.post(`${API_BASE_URL}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setResults(response.data);
