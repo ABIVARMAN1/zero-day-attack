@@ -32,12 +32,15 @@ app = Flask(__name__)
 _frontend_origin = os.environ.get('FRONTEND_URL', '').strip()
 _allowed_origins = os.environ.get('ALLOWED_ORIGINS', '').strip()
 
-if _frontend_origin or _allowed_origins:
+if bool(os.environ.get("MONGODB_URI")) or os.environ.get("FLASK_ENV") == "production":
     origins_list = []
     if _frontend_origin:
         origins_list.append(_frontend_origin)
     if _allowed_origins:
         origins_list.extend([o.strip() for o in _allowed_origins.split(',') if o.strip()])
+    
+    if not origins_list:
+        origins_list.append("https://zero-day-attack.vercel.app")
     
     CORS(app,
          supports_credentials=True,
