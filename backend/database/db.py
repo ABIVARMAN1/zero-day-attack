@@ -1,11 +1,38 @@
-import sqlite3
+"""
+Operational database layer (predictions, alerts, investigations, etc.).
+Uses MongoDB in production (when MONGODB_URI is set),
+falls back to SQLite for local development.
+"""
 import os
+import sqlite3
 import json
 from datetime import datetime
 
+# Determine backend
+_USE_MONGO = bool(os.environ.get("MONGODB_URI"))
+
+# SQLite paths
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "predictions.db")
 
+if _USE_MONGO:
+    from backend.database.mongo import (
+        get_predictions_collection,
+        get_alerts_collection,
+        init_mongo_indexes,
+    )
+
+
 def init_db():
+    """Initialize the database. For SQLite, create tables. For MongoDB, create indexes."""
+    if _USE_MONGO:
+        try:
+            init_mongo_indexes()
+            print("MongoDB indexes initialized.")
+        except Exception as e:
+            print(f"Warning: MongoDB init issue: {e}")
+        return
+    
+    # SQLite initialization
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
@@ -153,47 +180,82 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 def insert_prediction(prediction, attack_type, risk_score, severity, confidence, source="Simulation", metadata=None):
     if metadata is None:
         metadata = {}
-        
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
     
     timestamp = datetime.now().isoformat()
     
-    cursor.execute('''
-        INSERT INTO predictions (timestamp, prediction, attack_type, risk_score, severity, confidence, source, metadata)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (timestamp, prediction, attack_type, risk_score, severity, confidence, source, json.dumps(metadata)))
-    
-    pred_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    return pred_id
+    if _USE_MONGO:
+        coll = get_predictions_collection()
+        doc = {
+            "timestamp": timestamp,
+            "prediction": prediction,
+            "attack_type": attack_type,
+            "risk_score": risk_score,
+            "severity": severity,
+            "confidence": confidence,
+            "source": source,
+            "metadata": metadata,
+        }
+        result = coll.insert_one(doc)
+        return str(result.inserted_id)
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO predictions (timestamp, prediction, attack_type, risk_score, severity, confidence, source, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (timestamp, prediction, attack_type, risk_score, severity, confidence, source, json.dumps(metadata)))
+        pred_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return pred_id
+
 
 def get_predictions(limit=100):
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT * FROM predictions ORDER BY timestamp DESC LIMIT ?', (limit,))
-    rows = cursor.fetchall()
-    
-    conn.close()
-    return [dict(row) for row in rows]
+    if _USE_MONGO:
+        coll = get_predictions_collection()
+        docs = list(coll.find().sort("timestamp", -1).limit(limit))
+        results = []
+        for doc in docs:
+            doc["id"] = str(doc.pop("_id"))
+            results.append(doc)
+        return results
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM predictions ORDER BY timestamp DESC LIMIT ?', (limit,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
 
 def insert_alert(prediction_id, severity, title, description, risk_score):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
     timestamp = datetime.now().isoformat()
     
-    cursor.execute('''
-        INSERT INTO alerts (prediction_id, severity, title, description, risk_score, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (prediction_id, severity, title, description, risk_score, 'NEW', timestamp))
-    
-    conn.commit()
-    conn.close()
+    if _USE_MONGO:
+        coll = get_alerts_collection()
+        coll.insert_one({
+            "prediction_id": str(prediction_id),
+            "severity": severity,
+            "title": title,
+            "description": description,
+            "risk_score": risk_score,
+            "status": "NEW",
+            "created_at": timestamp,
+            "acknowledged_at": None,
+            "resolved_at": None,
+            "user_id": None,
+        })
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO alerts (prediction_id, severity, title, description, risk_score, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (prediction_id, severity, title, description, risk_score, 'NEW', timestamp))
+        conn.commit()
+        conn.close()

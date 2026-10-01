@@ -9,39 +9,16 @@ services:
     plan: free
     envVars:
       - key: JWT_SECRET_KEY
-        generateValue: true          # Render auto-generates a secure random value
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false   # Set manually in Render dashboard (contains credentials)
+      - key: FRONTEND_URL
+        value: https://zero-day-attack.vercel.app
+      - key: ALLOWED_ORIGINS
+        value: https://zero-day-attack.vercel.app
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: FLASK_ENV
         value: production
     healthCheckPath: /api/health
-    autoDeploy: true
-
-  # ─── Frontend: Vite/React Static Site ────────────────────────────────────────
-  - type: web
-    name: zero-day-frontend
-    runtime: static
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
-    plan: free
-    envVars:
-      - key: VITE_API_URL
-        # Replace this with your actual backend URL after first deploy
-        # Format: https://zero-day-backend.onrender.com
-        value: https://zero-day-backend.onrender.com
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
     autoDeploy: true

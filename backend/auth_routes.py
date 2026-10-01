@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, request, jsonify, make_response
 from datetime import datetime
 import qrcode
@@ -16,6 +17,45 @@ from backend.auth import (
 import re
 
 auth_bp = Blueprint('auth_bp', __name__)
+
+def _is_production():
+    """Check if running in production (cross-origin deployment)."""
+    return bool(os.environ.get("MONGODB_URI")) or os.environ.get("FLASK_ENV") == "production"
+
+def _set_auth_cookie(response, token):
+    """Set the access_token cookie with correct attributes for the environment."""
+    if _is_production():
+        # Cross-origin (Vercel → Render): requires SameSite=None + Secure
+        response.set_cookie(
+            'access_token', token,
+            httponly=True,
+            secure=True,
+            samesite='None',
+            max_age=7200,  # 2 hours
+            path='/',
+        )
+    else:
+        # Local development
+        response.set_cookie(
+            'access_token', token,
+            httponly=True,
+            secure=False,
+            path='/',
+        )
+
+def _delete_auth_cookie(response):
+    """Delete the access_token cookie with correct attributes."""
+    if _is_production():
+        response.set_cookie(
+            'access_token', '',
+            httponly=True,
+            secure=True,
+            samesite='None',
+            max_age=0,
+            path='/',
+        )
+    else:
+        response.delete_cookie('access_token', path='/')
 
 def get_client_ip():
     return request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
@@ -38,7 +78,10 @@ def register():
         
     if not check_password_strength(password):
         return jsonify({"error": "Password does not meet complexity requirements"}), 400
-        
+    
+    # Normalize email
+    email = email.strip().lower()
+    
     # Check if user already exists
     existing_user = get_user_by_email(email)
     if existing_user:
@@ -65,7 +108,7 @@ def register():
         "message": "Account created successfully. Please configure MFA.",
         "mfa_setup_required": True
     }))
-    response.set_cookie('access_token', temp_token, httponly=True, secure=False)
+    _set_auth_cookie(response, temp_token)
     return response
 
 @auth_bp.route('/api/auth/login', methods=['POST'])
@@ -79,18 +122,24 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email and password required"}), 400
 
+    # Normalize email
+    email = email.strip().lower()
+
     user = get_user_by_email(email)
     
     if not user:
-        # Don't reveal user doesn't exist
-        verify_password("dummy_hash_to_prevent_timing_attacks", "dummy")
+        # Don't reveal user doesn't exist — use timing-safe dummy
+        verify_password("$argon2id$v=19$m=65536,t=3,p=4$dummy$dummy", "dummy")
         return jsonify({"error": "Invalid credentials"}), 401
 
-    if user['locked_until']:
-        locked_until_dt = datetime.fromisoformat(user['locked_until'])
-        if datetime.utcnow() < locked_until_dt:
-            log_login_history(user['id'], False, ip_addr, user_agent, "Account locked")
-            return jsonify({"error": "Account temporarily locked"}), 403
+    if user.get('locked_until'):
+        try:
+            locked_until_dt = datetime.fromisoformat(user['locked_until'])
+            if datetime.utcnow() < locked_until_dt:
+                log_login_history(user['id'], False, ip_addr, user_agent, "Account locked")
+                return jsonify({"error": "Account temporarily locked"}), 403
+        except (ValueError, TypeError):
+            pass  # Invalid date format, proceed with login
 
     if not verify_password(user['password_hash'], password):
         update_user_login_status(user['id'], False)
@@ -99,11 +148,11 @@ def login():
 
     update_user_login_status(user['id'], True)
     
-    if user['mfa_enabled']:
+    if user.get('mfa_enabled'):
         # Issue a temporary token for MFA
         temp_token = generate_jwt(user['id'], mfa_pending=True)
         response = make_response(jsonify({"mfa_required": True}))
-        response.set_cookie('access_token', temp_token, httponly=True, secure=False) # secure=True in prod
+        _set_auth_cookie(response, temp_token)
         return response
 
     # Successful fully authenticated login
@@ -112,9 +161,9 @@ def login():
     
     response = make_response(jsonify({
         "success": True, 
-        "user": {"id": user["id"], "username": user["username"], "email": user["email"]}
+        "user": {"id": str(user["id"]), "username": user["username"], "email": user["email"]}
     }))
-    response.set_cookie('access_token', token, httponly=True, secure=False)
+    _set_auth_cookie(response, token)
     return response
 
 @auth_bp.route('/api/auth/mfa/verify', methods=['POST'])
@@ -135,7 +184,7 @@ def verify_mfa():
     user_agent = request.headers.get('User-Agent', '')
 
     user = get_user_by_id(user_id)
-    if not user or not user['mfa_enabled']:
+    if not user or not user.get('mfa_enabled'):
         return jsonify({"error": "Invalid request"}), 400
 
     if not verify_totp(user['mfa_secret'], code):
@@ -148,9 +197,9 @@ def verify_mfa():
     new_token = generate_jwt(user_id, mfa_pending=False)
     response = make_response(jsonify({
         "success": True,
-        "user": {"id": user["id"], "username": user["username"], "email": user["email"]}
+        "user": {"id": str(user["id"]), "username": user["username"], "email": user["email"]}
     }))
-    response.set_cookie('access_token', new_token, httponly=True, secure=False)
+    _set_auth_cookie(response, new_token)
     return response
 
 @auth_bp.route('/api/auth/me', methods=['GET'])
@@ -162,24 +211,26 @@ def get_me():
         
     return jsonify({
         "user": {
-            "id": user["id"], 
+            "id": str(user["id"]), 
             "username": user["username"], 
             "email": user["email"],
-            "mfa_enabled": bool(user["mfa_enabled"])
+            "mfa_enabled": bool(user.get("mfa_enabled", False)),
+            "role": user.get("role", "user"),
+            "name": user.get("name"),
         }
     })
 
 @auth_bp.route('/api/auth/logout', methods=['POST'])
 def logout():
     response = make_response(jsonify({"success": True}))
-    response.delete_cookie('access_token')
+    _delete_auth_cookie(response)
     return response
 
 @auth_bp.route('/api/auth/mfa/setup', methods=['POST'])
 @require_auth(allow_mfa_pending=True)
 def mfa_setup():
     user = get_user_by_id(request.user_id)
-    if user['mfa_enabled']:
+    if user.get('mfa_enabled'):
         return jsonify({"error": "MFA already enabled"}), 400
         
     secret = generate_totp_secret()
@@ -194,11 +245,6 @@ def mfa_setup():
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     img_str = base64.b64encode(buffered.getvalue()).decode()
-    
-    # Temporarily store secret in a cache/db or just return it securely for the setup step.
-    # In a real app, you'd store this temporarily associated with the session until verified.
-    # We will pass it back for simplicity in this demo, but this is a tradeoff. 
-    # To avoid exposing secret, we can store it in the session or a temporary table.
     
     return jsonify({
         "qr_code": f"data:image/png;base64,{img_str}",
@@ -221,7 +267,7 @@ def mfa_enable():
     # We will issue a fully authenticated token.
     new_token = generate_jwt(request.user_id, mfa_pending=False)
     response = make_response(jsonify({"success": True}))
-    response.set_cookie('access_token', new_token, httponly=True, secure=False)
+    _set_auth_cookie(response, new_token)
     return response
 
 @auth_bp.route('/api/auth/mfa/disable', methods=['POST'])
@@ -267,6 +313,9 @@ reset_tokens = {}
 def forgot_password():
     data = request.get_json()
     email = data.get('email')
+    
+    if email:
+        email = email.strip().lower()
     
     user = get_user_by_email(email)
     if user:

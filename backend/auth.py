@@ -7,7 +7,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from functools import wraps
 from flask import request, jsonify
-from backend.database.auth_db import get_db_connection
+from backend.database.auth_db import get_user_by_id
 
 # Should use environment variables in production
 SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
@@ -26,6 +26,9 @@ def verify_password(hashed_password: str, password: str) -> bool:
         return ph.verify(hashed_password, password)
     except VerifyMismatchError:
         return False
+    except Exception:
+        # Handle invalid hash format gracefully (e.g. dummy hash for timing attack prevention)
+        return False
 
 def check_password_strength(password: str) -> bool:
     """
@@ -43,9 +46,10 @@ def check_password_strength(password: str) -> bool:
         return False
     return True
 
-def generate_jwt(user_id: int, mfa_pending: bool = False) -> str:
+def generate_jwt(user_id, mfa_pending: bool = False) -> str:
+    """Generate a JWT. user_id can be int (SQLite) or str (MongoDB ObjectId)."""
     payload = {
-        "user_id": user_id,
+        "user_id": str(user_id),  # Always store as string for MongoDB ObjectId compat
         "mfa_pending": mfa_pending,
         "exp": datetime.utcnow() + JWT_EXPIRATION_DELTA,
         "iat": datetime.utcnow()
@@ -60,6 +64,10 @@ def decode_jwt(token: str):
         return None
     except jwt.InvalidTokenError:
         return None
+
+def _is_production():
+    """Check if running in production (cross-origin deployment)."""
+    return bool(os.environ.get("MONGODB_URI")) or os.environ.get("FLASK_ENV") == "production"
 
 def require_auth(allow_mfa_pending=False):
     def decorator(f):
@@ -81,16 +89,20 @@ def require_auth(allow_mfa_pending=False):
             if payload.get("mfa_pending") and not allow_mfa_pending:
                 return jsonify({"error": "MFA verification required"}), 403
 
-            # Attach user info to request
-            conn = get_db_connection()
-            user = conn.execute("SELECT id, username, email, role, mfa_enabled FROM users WHERE id = ?", (payload["user_id"],)).fetchone()
-            conn.close()
+            # Attach user info to request — use auth_db which handles both MongoDB and SQLite
+            user = get_user_by_id(payload["user_id"])
             
             if not user:
                 return jsonify({"error": "User not found"}), 401
                 
-            request.user = dict(user)
-            request.user_id = payload["user_id"]
+            request.user = {
+                "id": user["id"],
+                "username": user.get("username"),
+                "email": user.get("email"),
+                "role": user.get("role", "user"),
+                "mfa_enabled": user.get("mfa_enabled", False),
+            }
+            request.user_id = user["id"]
             return f(*args, **kwargs)
         return decorated
     # Allow decorator to be used without parentheses if no args

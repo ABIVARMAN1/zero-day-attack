@@ -146,3 +146,5 @@ qrcode==7.4.2
 Flask-Limiter==3.8.0
 gunicorn
 reportlab==4.2.5
+pymongo
+dnspython

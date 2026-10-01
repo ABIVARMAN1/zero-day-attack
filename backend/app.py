@@ -22,16 +22,33 @@ ZeroDayPredictor = pred_module.ZeroDayPredictor
 from backend.auth_routes import auth_bp
 from backend.api_routes import api_bp
 from backend.auth import require_auth, hash_password
-from backend.database.auth_db import create_user, get_db_connection
+from backend.database.auth_db import create_user, get_user_by_email
 
 app = Flask(__name__)
 
-# Enable CORS - restrict to frontend origin in production
-_allowed_origins = os.environ.get('ALLOWED_ORIGINS', '*')
-if _allowed_origins == '*':
-    CORS(app, supports_credentials=True)
+# ─── CORS Configuration ───────────────────────────────────────────────────────
+# In production, restrict to the actual Vercel frontend origin.
+# Credentialed requests (cookies) REQUIRE a specific origin, not wildcard '*'.
+_frontend_origin = os.environ.get('FRONTEND_URL', '').strip()
+_allowed_origins = os.environ.get('ALLOWED_ORIGINS', '').strip()
+
+if _frontend_origin or _allowed_origins:
+    origins_list = []
+    if _frontend_origin:
+        origins_list.append(_frontend_origin)
+    if _allowed_origins:
+        origins_list.extend([o.strip() for o in _allowed_origins.split(',') if o.strip()])
+    
+    CORS(app,
+         supports_credentials=True,
+         origins=origins_list,
+         allow_headers=["Content-Type", "Authorization"],
+         expose_headers=["Set-Cookie"],
+         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    )
 else:
-    CORS(app, supports_credentials=True, origins=_allowed_origins.split(','))
+    # Local development — allow all
+    CORS(app, supports_credentials=True)
 
 # Initialize Limiter for brute-force protection
 limiter = Limiter(
@@ -59,7 +76,20 @@ def get_predictor():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "ok", "message": "Backend is running!"})
+    result = {"status": "ok", "backend": "running"}
+    
+    # Check database connectivity
+    _use_mongo = bool(os.environ.get("MONGODB_URI"))
+    if _use_mongo:
+        try:
+            from backend.database.mongo import is_mongo_available
+            result["database"] = "connected" if is_mongo_available() else "disconnected"
+        except Exception:
+            result["database"] = "error"
+    else:
+        result["database"] = "sqlite"
+    
+    return jsonify(result)
 
 @app.route('/dashboard', methods=['GET'])
 @app.route('/api/statistics', methods=['GET'])
@@ -183,15 +213,16 @@ def upload():
         return jsonify({"error": str(e)}), 500
 
 def seed_admin_user():
-    conn = get_db_connection()
-    user = conn.execute("SELECT id FROM users LIMIT 1").fetchone()
-    conn.close()
-    
-    if not user:
-        print("No users found. Creating default admin user...")
-        pwd_hash = hash_password("Admin123!")
-        create_user("admin", "admin@soc.local", pwd_hash, name="System Admin", role="admin")
-        print("Created admin@soc.local with password 'Admin123!'")
+    """Create a default admin user if no users exist."""
+    try:
+        admin = get_user_by_email("admin@soc.local")
+        if not admin:
+            print("No admin user found. Creating default admin user...")
+            pwd_hash = hash_password("Admin123!@#$")  # Meets 12+ char strength requirement
+            create_user("admin", "admin@soc.local", pwd_hash, name="System Admin", role="admin")
+            print("Created admin@soc.local")
+    except Exception as e:
+        print(f"Warning: Could not seed admin user: {e}")
 
 # Initialize DB and seed admin on startup (works with both gunicorn and flask dev server)
 init_db()
@@ -199,4 +230,3 @@ seed_admin_user()
 
 if __name__ == '__main__':
     app.run(debug=False, port=5000, host='0.0.0.0')
-
