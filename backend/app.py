@@ -76,16 +76,19 @@ def get_predictor():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    result = {"status": "ok", "backend": "running"}
-    
-    # Check database connectivity
+    return jsonify({"message": "Backend is running!", "status": "ok"})
+
+@app.route('/api/health/db', methods=['GET'])
+def health_db_check():
+    result = {"status": "ok", "database": "connected"}
     _use_mongo = bool(os.environ.get("MONGODB_URI"))
     if _use_mongo:
         try:
             from backend.database.mongo import is_mongo_available
-            result["database"] = "connected" if is_mongo_available() else "disconnected"
+            if not is_mongo_available():
+                return jsonify({"status": "error", "database": "disconnected"}), 503
         except Exception:
-            result["database"] = "error"
+            return jsonify({"status": "error", "database": "error"}), 503
     else:
         result["database"] = "sqlite"
     

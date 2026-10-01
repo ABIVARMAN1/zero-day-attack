@@ -17,7 +17,7 @@ def get_mongo_client():
     if _client is None:
         if not MONGODB_URI:
             raise RuntimeError("MONGODB_URI is not configured")
-        _client = MongoClient(MONGODB_URI)
+        _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=2000, connectTimeoutMS=2000)
     return _client
 
 def get_mongo_db():
