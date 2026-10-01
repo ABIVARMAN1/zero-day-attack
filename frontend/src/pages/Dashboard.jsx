@@ -82,7 +82,7 @@ const Dashboard = () => {
         <FaExclamationTriangle style={{ fontSize: '3rem', color: 'var(--neon-red)', opacity: 0.5 }} />
         <div style={{ color: 'var(--text-muted)', textAlign: 'center' }}>
           <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Connection Failed</div>
-          <div style={{ fontSize: '0.85rem' }}>Ensure the backend is running on port 5000</div>
+          <div style={{ fontSize: '0.85rem' }}>Unable to connect to the backend service.<br/>Backend: {API_BASE_URL}</div>
         </div>
       </div>
     );

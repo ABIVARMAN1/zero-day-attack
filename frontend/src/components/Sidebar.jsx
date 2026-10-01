@@ -166,7 +166,7 @@ const Sidebar = () => {
                 </div>
               </div>
               <div className="status-port">
-                port:5000 · localhost
+                {backendOnline ? 'Connected' : 'Disconnected'}
               </div>
             </div>
             <div className="footer-copyright">
