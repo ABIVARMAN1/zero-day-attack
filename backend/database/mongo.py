@@ -17,7 +17,15 @@ def get_mongo_client():
     if _client is None:
         if not MONGODB_URI:
             raise RuntimeError("MONGODB_URI is not configured")
-        _client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=2000, connectTimeoutMS=2000)
+        import certifi
+        _client = MongoClient(
+            MONGODB_URI,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+            socketTimeoutMS=5000,
+            waitQueueTimeoutMS=5000,
+            tlsCAFile=certifi.where()
+        )
     return _client
 
 def get_mongo_db():
@@ -77,27 +85,24 @@ def get_reports_collection():
 
 def init_mongo_indexes():
     """Create indexes for performance and uniqueness."""
-    try:
-        users = get_users_collection()
-        users.create_index("email", unique=True)
-        users.create_index("username")
-        
-        predictions = get_predictions_collection()
-        predictions.create_index([("timestamp", -1)])
-        
-        alerts = get_alerts_collection()
-        alerts.create_index([("created_at", -1)])
-        alerts.create_index("status")
-        
-        login_history = get_login_history_collection()
-        login_history.create_index("user_id")
-        login_history.create_index([("timestamp", -1)])
-        
-        notifications = get_notifications_collection()
-        notifications.create_index("user_id")
-        notifications.create_index([("created_at", -1)])
-        
-        reports = get_reports_collection()
-        reports.create_index([("created_at", -1)])
-    except Exception as e:
-        print(f"Warning: Could not create MongoDB indexes: {e}")
+    users = get_users_collection()
+    users.create_index("email", unique=True)
+    users.create_index("username")
+    
+    predictions = get_predictions_collection()
+    predictions.create_index([("timestamp", -1)])
+    
+    alerts = get_alerts_collection()
+    alerts.create_index([("created_at", -1)])
+    alerts.create_index("status")
+    
+    login_history = get_login_history_collection()
+    login_history.create_index("user_id")
+    login_history.create_index([("timestamp", -1)])
+    
+    notifications = get_notifications_collection()
+    notifications.create_index("user_id")
+    notifications.create_index([("created_at", -1)])
+    
+    reports = get_reports_collection()
+    reports.create_index([("created_at", -1)])
