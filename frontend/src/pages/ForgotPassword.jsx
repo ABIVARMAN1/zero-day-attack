@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import toast from 'react-hot-toast';
 import { Shield } from 'lucide-react';
 import './Login.css'; // Reuse login styles
@@ -13,7 +13,7 @@ const ForgotPassword = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/auth/password/forgot', { email });
+            await axios.post(`${"$"}{API_BASE_URL}/api/auth/password/forgot`, { email });
             toast.success('If an account exists, a reset link has been sent.');
         } catch (error) {
             // Ignore errors for security to prevent email enumeration

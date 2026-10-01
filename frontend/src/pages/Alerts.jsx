@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import { useNavigate } from 'react-router-dom';
 import './Alerts.css';
 
@@ -16,7 +16,7 @@ const Alerts = () => {
     const fetchAlerts = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/alerts', { withCredentials: true });
+            const res = await axios.get(`${"$"}{API_BASE_URL}/api/alerts`, { withCredentials: true });
             if (res.data.success) {
                 setAlerts(res.data.alerts);
             }
@@ -29,7 +29,7 @@ const Alerts = () => {
 
     const updateAlertStatus = async (id, status) => {
         try {
-            const res = await axios.patch(`http://localhost:5000/api/alerts/${id}`, { status }, { withCredentials: true });
+            const res = await axios.patch(`${API_BASE_URL}/api/alerts/${id}`, { status }, { withCredentials: true });
             if (res.data.success) {
                 fetchAlerts();
             }
@@ -41,7 +41,7 @@ const Alerts = () => {
     const handleInvestigate = async (alert) => {
         // Create an investigation and navigate to it
         try {
-            const res = await axios.post('http://localhost:5000/api/investigations', { alert_id: alert.id }, { withCredentials: true });
+            const res = await axios.post(`${"$"}{API_BASE_URL}/api/investigations`, { alert_id: alert.id }, { withCredentials: true });
             if (res.data.success) {
                 navigate('/investigations');
             }

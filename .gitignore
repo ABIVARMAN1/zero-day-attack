@@ -9,6 +9,7 @@ venv/
 env/
 __pycache__/
 *.py[cod]
+.python-version
 
 # Environment variables
 .env
@@ -51,3 +52,7 @@ dataset/
 
 # Generated reports
 backend/reports/generated/
+
+# NOTE: models/*.pkl files are intentionally tracked for Render deployment
+# output/ - generated outputs (not needed in deployment)
+output/

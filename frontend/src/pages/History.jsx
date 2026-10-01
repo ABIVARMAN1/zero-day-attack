@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import {
   FaDownload, FaSearch, FaSync, FaFilter,
   FaCheckCircle, FaExclamationTriangle, FaHistory
@@ -31,7 +31,7 @@ const History = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:5000/api/history', { withCredentials: true });
+      const response = await axios.get(`${"$"}{API_BASE_URL}/api/history`, { withCredentials: true });
       const records = response.data.history || [];
       const mapped = records.map(row => {
         let status = 'Normal';

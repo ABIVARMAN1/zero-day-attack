@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import { FaFileAlt, FaDownload, FaSync } from 'react-icons/fa';
 import './Reports.css';
 
@@ -18,7 +18,7 @@ const Reports = () => {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/reports', { withCredentials: true });
+      const res = await axios.get(`${"$"}{API_BASE_URL}/api/reports`, { withCredentials: true });
       if (res.data.success) {
         setReports(res.data.reports);
       }
@@ -37,7 +37,7 @@ const Reports = () => {
 
     try {
       setGenerating(true);
-      const res = await axios.post('http://localhost:5000/api/reports', {
+      const res = await axios.post(`${"$"}{API_BASE_URL}/api/reports`, {
         report_type: reportType,
         timeframe: timeframe
       }, { withCredentials: true });
@@ -57,7 +57,7 @@ const Reports = () => {
 
   const handleDownload = async (reportId, title) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/reports/${reportId}/download`, {
+      const res = await axios.get(`${API_BASE_URL}/api/reports/${reportId}/download`, {
         withCredentials: true,
         responseType: 'blob'
       });

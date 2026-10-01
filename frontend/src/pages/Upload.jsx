@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import {
   FaCloudUploadAlt, FaExclamationTriangle, FaCheckCircle,
   FaSync, FaFileAlt, FaTimes, FaFilter, FaDownload
@@ -57,7 +57,7 @@ const Upload = () => {
     setError(null);
     setResults(null);
     try {
-      const response = await axios.post('http://localhost:5000/upload', formData, {
+      const response = await axios.post(`${"$"}{API_BASE_URL}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setResults(response.data);

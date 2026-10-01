@@ -25,8 +25,13 @@ from backend.auth import require_auth, hash_password
 from backend.database.auth_db import create_user, get_db_connection
 
 app = Flask(__name__)
-# Enable CORS for credentials (cookies)
-CORS(app, supports_credentials=True)
+
+# Enable CORS - restrict to frontend origin in production
+_allowed_origins = os.environ.get('ALLOWED_ORIGINS', '*')
+if _allowed_origins == '*':
+    CORS(app, supports_credentials=True)
+else:
+    CORS(app, supports_credentials=True, origins=_allowed_origins.split(','))
 
 # Initialize Limiter for brute-force protection
 limiter = Limiter(
@@ -188,8 +193,10 @@ def seed_admin_user():
         create_user("admin", "admin@soc.local", pwd_hash, name="System Admin", role="admin")
         print("Created admin@soc.local with password 'Admin123!'")
 
+# Initialize DB and seed admin on startup (works with both gunicorn and flask dev server)
+init_db()
+seed_admin_user()
+
 if __name__ == '__main__':
-    init_db()
-    seed_admin_user()
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=False, port=5000, host='0.0.0.0')
 

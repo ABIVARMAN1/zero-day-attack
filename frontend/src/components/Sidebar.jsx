@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { FaHome, FaUpload, FaHistory, FaShieldAlt, FaBolt, FaServer, FaChevronRight, FaCog, FaSignOutAlt, FaUserCircle, FaFileAlt } from 'react-icons/fa';
 import { MdSecurity, MdMenu } from 'react-icons/md';
 import { Moon, Sun, Monitor } from 'lucide-react';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -24,7 +24,7 @@ const Sidebar = () => {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        await axios.get('http://localhost:5000/api/health', { timeout: 2000 });
+        await axios.get(`${"$"}{API_BASE_URL}/api/health`, { timeout: 2000 });
         setBackendOnline(true);
       } catch { setBackendOnline(false); }
     };

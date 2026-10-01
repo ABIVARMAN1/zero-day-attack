@@ -168,7 +168,7 @@ describe('Global Search Modal', () => {
     fireEvent.change(input, { target: { value: 'Auth' } });
 
     await waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith('http://localhost:5000/api/search?q=Auth', { withCredentials: true });
+      expect(axios.get).toHaveBeenCalledWith(`${"$"}{API_BASE_URL}/api/search?q=Auth`, { withCredentials: true });
     });
   });
 });

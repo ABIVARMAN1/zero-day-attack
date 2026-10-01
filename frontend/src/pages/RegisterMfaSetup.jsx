@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import toast from 'react-hot-toast';
 import { Shield, AlertTriangle, CheckCircle } from 'lucide-react';
 import './Login.css';
@@ -16,7 +16,7 @@ const RegisterMfaSetup = () => {
         // Fetch MFA setup details automatically
         const initMfa = async () => {
             try {
-                const res = await axios.post('http://localhost:5000/api/auth/mfa/setup');
+                const res = await axios.post(`${"$"}{API_BASE_URL}/api/auth/mfa/setup`);
                 setMfaSetupData(res.data);
             } catch (err) {
                 toast.error("Failed to initialize MFA setup. Please log in and try again.");
@@ -30,7 +30,7 @@ const RegisterMfaSetup = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/auth/mfa/enable', {
+            await axios.post(`${"$"}{API_BASE_URL}/api/auth/mfa/enable`, {
                 secret: mfaSetupData.secret,
                 code: mfaCode
             });

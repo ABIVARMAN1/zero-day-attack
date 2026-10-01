@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import { Search } from 'lucide-react';
 import './GlobalHeader.css';
 
@@ -39,7 +39,7 @@ const GlobalHeader = () => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/notifications', { withCredentials: true });
+      const res = await axios.get(`${"$"}{API_BASE_URL}/api/notifications`, { withCredentials: true });
       if (res.data.success) {
         setNotifications(res.data.notifications);
       }
@@ -64,7 +64,7 @@ const GlobalHeader = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/search?q=${encodeURIComponent(searchQuery)}`, { withCredentials: true });
+        const res = await axios.get(`${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`, { withCredentials: true });
         if (res.data.success) {
           setSearchResults(res.data.results);
         } else {

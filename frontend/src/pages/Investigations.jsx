@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import './Investigations.css';
 
 const Investigations = () => {
@@ -12,7 +12,7 @@ const Investigations = () => {
 
     const fetchInvestigations = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/investigations', { withCredentials: true });
+            const res = await axios.get(`${"$"}{API_BASE_URL}/api/investigations`, { withCredentials: true });
             if (res.data.success) {
                 setInvestigations(res.data.investigations);
             }
@@ -25,7 +25,7 @@ const Investigations = () => {
 
     const updateStatus = async (id, status) => {
         try {
-            const res = await axios.patch(`http://localhost:5000/api/investigations/${id}`, { status }, { withCredentials: true });
+            const res = await axios.patch(`${API_BASE_URL}/api/investigations/${id}`, { status }, { withCredentials: true });
             if (res.data.success) {
                 fetchInvestigations();
             }

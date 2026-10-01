@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axios, { API_BASE_URL } from '../api';
 import Plot from 'react-plotly.js';
 import {
   FaShieldAlt, FaExclamationTriangle, FaBug,
@@ -50,7 +50,7 @@ const Dashboard = () => {
   const fetchStats = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
     try {
-      const response = await axios.get('http://localhost:5000/dashboard');
+      const response = await axios.get(`${"$"}{API_BASE_URL}/dashboard`);
       setStats(response.data);
       setLastUpdated(new Date());
     } catch (error) {
