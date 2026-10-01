@@ -39,7 +39,7 @@ if bool(os.environ.get("MONGODB_URI")) or os.environ.get("FLASK_ENV") == "produc
     if _allowed_origins:
         origins_list.extend([o.strip() for o in _allowed_origins.split(',') if o.strip()])
     
-    if not origins_list:
+    if "https://zero-day-attack.vercel.app" not in origins_list:
         origins_list.append("https://zero-day-attack.vercel.app")
     
     CORS(app,
