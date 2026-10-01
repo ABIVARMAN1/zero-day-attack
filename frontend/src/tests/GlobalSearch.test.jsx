@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import GlobalHeader from '../components/GlobalHeader';
 import axios from 'axios';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { API_BASE_URL } from '../api';
 
 vi.mock('axios');
 
