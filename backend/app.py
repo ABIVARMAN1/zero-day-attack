@@ -19,10 +19,9 @@ pred_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(pred_module)
 ZeroDayPredictor = pred_module.ZeroDayPredictor
 
-from backend.auth_routes import auth_bp
 from backend.api_routes import api_bp
-from backend.auth import require_auth, hash_password
-from backend.database.auth_db import create_user, get_user_by_email
+
+
 
 app = Flask(__name__)
 
@@ -59,10 +58,7 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Apply rate limits to auth routes
-limiter.limit("60 per minute")(auth_bp)
 
-app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp, url_prefix='/api')
 
 # Initialize Predictor
@@ -103,7 +99,6 @@ def health_db_check():
 @app.route('/dashboard', methods=['GET'])
 @app.route('/api/statistics', methods=['GET'])
 @app.route('/api/model-performance', methods=['GET'])
-@require_auth
 def dashboard():
     # Provide mock or aggregate data for the dashboard
     history = get_predictions(1000)
@@ -146,7 +141,6 @@ def dashboard():
 
 @app.route('/history', methods=['GET'])
 @app.route('/api/history', methods=['GET'])
-@require_auth
 def history():
     limit = int(request.args.get('limit', 100))
     hist = get_predictions(limit)
@@ -154,7 +148,6 @@ def history():
 
 @app.route('/upload', methods=['POST'])
 @app.route('/api/predict', methods=['POST'])
-@require_auth
 def upload():
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -221,21 +214,8 @@ def upload():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-def seed_admin_user():
-    """Create a default admin user if no users exist."""
-    try:
-        admin = get_user_by_email("admin@soc.local")
-        if not admin:
-            print("No admin user found. Creating default admin user...")
-            pwd_hash = hash_password("Admin123!@#$")  # Meets 12+ char strength requirement
-            create_user("admin", "admin@soc.local", pwd_hash, name="System Admin", role="admin")
-            print("Created admin@soc.local")
-    except Exception as e:
-        print(f"Warning: Could not seed admin user: {e}")
-
-# Initialize DB and seed admin on startup (works with both gunicorn and flask dev server)
+# Initialize DB on startup
 init_db()
-seed_admin_user()
 
 if __name__ == '__main__':
     app.run(debug=False, port=5000, host='0.0.0.0')

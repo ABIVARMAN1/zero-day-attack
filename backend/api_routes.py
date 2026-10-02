@@ -3,7 +3,8 @@ import json
 import sqlite3
 from flask import Blueprint, jsonify, request, send_file
 from datetime import datetime
-from backend.auth import require_auth, require_role
+
+
 from backend.database.db import DB_PATH
 
 # Determine if using MongoDB
@@ -28,7 +29,6 @@ def get_db():
     return conn
 
 @api_bp.route('/alerts', methods=['GET'])
-@require_auth
 def get_alerts():
     status_filter = request.args.get('status')
     severity_filter = request.args.get('severity')
@@ -67,7 +67,6 @@ def get_alerts():
         return jsonify({"success": True, "alerts": [dict(r) for r in rows]})
 
 @api_bp.route('/alerts/<alert_id>', methods=['PATCH'])
-@require_role(['admin', 'analyst'])
 def update_alert(alert_id):
     data = request.json
     status = data.get('status')
@@ -103,7 +102,6 @@ def update_alert(alert_id):
     return jsonify({"success": True, "message": "Alert updated"})
 
 @api_bp.route('/investigations', methods=['GET', 'POST'])
-@require_role(['admin', 'analyst'])
 def investigations():
     if request.method == 'GET':
         if _USE_MONGO:
@@ -137,7 +135,7 @@ def investigations():
             coll = get_investigations_collection()
             coll.insert_one({
                 "alert_id": str(alert_id),
-                "assigned_to": str(request.user_id),
+                "assigned_to": str("anonymous"),
                 "status": "OPEN",
                 "notes": notes,
                 "created_at": now,
@@ -156,7 +154,7 @@ def investigations():
             cursor.execute('''
                 INSERT INTO investigations (alert_id, assigned_to, notes, created_at, updated_at)
                 VALUES (?, ?, ?, datetime('now'), datetime('now'))
-            ''', (alert_id, request.user_id, notes))
+            ''', (alert_id, "anonymous", notes))
             cursor.execute("UPDATE alerts SET status = 'INVESTIGATING' WHERE id = ?", (alert_id,))
             conn.commit()
             conn.close()
@@ -164,7 +162,6 @@ def investigations():
         return jsonify({"success": True, "message": "Investigation created"})
 
 @api_bp.route('/investigations/<inv_id>', methods=['PATCH'])
-@require_role(['admin', 'analyst'])
 def update_investigation(inv_id):
     data = request.json
     status = data.get('status')
@@ -195,7 +192,6 @@ def update_investigation(inv_id):
     return jsonify({"success": True, "message": "Investigation updated"})
 
 @api_bp.route('/models', methods=['GET'])
-@require_auth
 def get_models():
     if _USE_MONGO:
         coll = get_model_registry_collection()
@@ -250,7 +246,6 @@ def get_models():
         return jsonify({"success": True, "models": models})
 
 @api_bp.route('/reports', methods=['GET'])
-@require_role(['admin', 'analyst'])
 def get_reports():
     if _USE_MONGO:
         coll = get_reports_collection()
@@ -269,7 +264,6 @@ def get_reports():
         return jsonify({"success": True, "reports": [dict(r) for r in rows]})
 
 @api_bp.route('/reports', methods=['POST'])
-@require_role(['admin', 'analyst'])
 def generate_report():
     data = request.json or {}
     report_type = data.get('report_type')
@@ -286,7 +280,7 @@ def generate_report():
         result = coll.insert_one({
             "report_type": report_type,
             "title": title,
-            "generated_by": str(request.user_id),
+            "generated_by": str("anonymous"),
             "created_at": now,
             "parameters": timeframe,
             "content": "generated_on_the_fly",
@@ -298,7 +292,7 @@ def generate_report():
         cursor.execute('''
             INSERT INTO reports (report_type, title, generated_by, created_at, parameters, content)
             VALUES (?, ?, ?, datetime('now'), ?, ?)
-        ''', (report_type, title, request.user_id, timeframe, "generated_on_the_fly"))
+        ''', (report_type, title, "anonymous", timeframe, "generated_on_the_fly"))
         conn.commit()
         report_id = cursor.lastrowid
         conn.close()
@@ -306,7 +300,6 @@ def generate_report():
     return jsonify({"success": True, "message": "Report generated successfully", "report_id": report_id})
 
 @api_bp.route('/reports/<report_id>/download', methods=['GET'])
-@require_auth
 def download_report(report_id):
     if _USE_MONGO:
         from bson import ObjectId
@@ -349,11 +342,10 @@ def download_report(report_id):
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name=safe_filename)
 
 @api_bp.route('/notifications', methods=['GET'])
-@require_auth
 def get_notifications():
     if _USE_MONGO:
         coll = get_notifications_collection()
-        docs = list(coll.find({"user_id": str(request.user_id)}).sort("created_at", -1).limit(50))
+        docs = list(coll.find({"user_id": str("anonymous")}).sort("created_at", -1).limit(50))
         notifications = []
         for doc in docs:
             doc["id"] = str(doc.pop("_id"))
@@ -362,13 +354,12 @@ def get_notifications():
     else:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50", (request.user_id,))
+        cursor.execute("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50", ("anonymous",))
         rows = cursor.fetchall()
         conn.close()
         return jsonify({"success": True, "notifications": [dict(r) for r in rows]})
 
 @api_bp.route('/search', methods=['GET'])
-@require_auth
 def search():
     query = request.args.get('q', '').strip()
     if not query:

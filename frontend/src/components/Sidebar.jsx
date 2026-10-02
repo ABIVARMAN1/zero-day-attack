@@ -4,7 +4,6 @@ import { FaHome, FaUpload, FaHistory, FaShieldAlt, FaBolt, FaServer, FaChevronRi
 import { MdSecurity, MdMenu } from 'react-icons/md';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import axios, { API_BASE_URL } from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
 const Sidebar = () => {
@@ -12,7 +11,6 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const [time, setTime] = useState(new Date());
   const [backendOnline, setBackendOnline] = useState(false);
-  const { user, logout } = useAuth();
   const { themeMode, toggleTheme } = useTheme();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -32,11 +30,6 @@ const Sidebar = () => {
     const interval = setInterval(checkBackend, 8000);
     return () => clearInterval(interval);
   }, []);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/');
-  };
 
   const navItems = [
     { to: '/',        icon: <FaHome />,    label: 'Dashboard',       sub: 'Overview' },
@@ -137,22 +130,19 @@ const Sidebar = () => {
           {/* Footer status */}
           <div className="sidebar-footer">
             <div className="user-profile-row">
-                <div className="icon-box user-avatar" title={user?.username || 'Admin'}>
+                <div className="icon-box user-avatar" title="Admin">
                   <FaUserCircle size={24} color="#00ffff" />
                 </div>
                 <div className="text-box user-info">
-                    <div className="user-name">{user?.username || 'Admin'}</div>
+                    <div className="user-name">Admin</div>
                     <div className="user-session">
                         <div className="session-dot"></div>
-                        Secure Session
+                        Active
                     </div>
                 </div>
                 <div className="user-actions">
                   <button onClick={toggleTheme} className="action-btn" title="Toggle Theme">
                       {themeMode === 'dark' ? <Moon size={16} /> : themeMode === 'light' ? <Sun size={16} /> : <Monitor size={16} />}
-                  </button>
-                  <button onClick={handleLogout} className="action-btn logout-btn" title="Logout">
-                      <FaSignOutAlt size={16} />
                   </button>
                 </div>
             </div>
