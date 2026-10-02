@@ -14,8 +14,6 @@ import Reports from './pages/Reports';
 import History from './pages/History';
 import LiveMonitoring from './pages/LiveMonitoring';
 import ModelPerformance from './pages/ModelPerformance';
-import Login from './pages/Login';
-import Register from './pages/Register';
 import RegisterMfaSetup from './pages/RegisterMfaSetup';
 import Settings from './pages/Settings';
 import ForgotPassword from './pages/ForgotPassword';
@@ -45,8 +43,8 @@ function App() {
       <Router>
         <Toaster position="top-right" toastOptions={{ className: 'soc-toast', style: { background: '#111', color: '#0f0', border: '1px solid #0f0' } }} />
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/register" element={<Navigate to="/" replace />} />
           <Route path="/mfa-setup" element={<RegisterMfaSetup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           

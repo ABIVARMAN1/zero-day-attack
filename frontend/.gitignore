@@ -22,3 +22,35 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Flask
+instance/
+
+# Temporary files
+*.tmp
+*.temp

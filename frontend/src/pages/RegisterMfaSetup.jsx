@@ -20,7 +20,7 @@ const RegisterMfaSetup = () => {
                 setMfaSetupData(res.data);
             } catch (err) {
                 toast.error("Failed to initialize MFA setup. Please log in and try again.");
-                navigate('/login');
+                navigate('/');
             }
         };
         initMfa();
@@ -37,7 +37,7 @@ const RegisterMfaSetup = () => {
             setSuccess(true);
             toast.success("MFA Enabled Successfully!");
             setTimeout(() => {
-                navigate('/login'); // Proceed to login screen after success
+                navigate('/'); // Proceed to login screen after success
             }, 2000);
         } catch (error) {
             toast.error(error.response?.data?.error || "Invalid verification code.");

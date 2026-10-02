@@ -309,7 +309,7 @@ def generate_report():
             "generated_by": str(request.user_id),
             "created_at": now,
             "parameters": timeframe,
-            "content": filepath,
+            "content": filename,
         })
         report_id = str(result.inserted_id)
     else:
@@ -318,7 +318,7 @@ def generate_report():
         cursor.execute('''
             INSERT INTO reports (report_type, title, generated_by, created_at, parameters, content)
             VALUES (?, ?, ?, datetime('now'), ?, ?)
-        ''', (report_type, title, request.user_id, timeframe, filepath))
+        ''', (report_type, title, request.user_id, timeframe, filename))
         conn.commit()
         report_id = cursor.lastrowid
         conn.close()
@@ -338,25 +338,24 @@ def download_report(report_id):
         
         if not row:
             return jsonify({"error": "Report not found"}), 404
-        filepath = row.get('content')
-        title = row.get('title', 'report')
-    else:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM reports WHERE id = ?", (report_id,))
-        row = cursor.fetchone()
-        conn.close()
         
-        if not row:
-            return jsonify({"error": "Report not found"}), 404
-        filepath = row['content']
-        title = row['title']
-    
+        # Handle both legacy absolute paths and new relative filenames
+        stored_content = row.get('content', '') if _USE_MONGO else row['content']
+        title = row.get('title', 'report') if _USE_MONGO else row['title']
+        
+        import os
+        from pathlib import Path
+        reports_dir = os.path.join(os.path.dirname(__file__), 'reports', 'generated')
+        
+        # If it's already an absolute path (legacy), we might try to extract the filename
+        # A safer production approach: always extract filename and rebuild path locally
+        filename = os.path.basename(stored_content)
+        filepath = os.path.join(reports_dir, filename)
+        
     if not filepath or not os.path.exists(filepath):
         return jsonify({"error": "Report file not found"}), 404
         
     # Prevent path traversal
-    reports_dir = os.path.join(os.path.dirname(__file__), 'reports', 'generated')
     if not os.path.abspath(filepath).startswith(os.path.abspath(reports_dir)):
         return jsonify({"error": "Invalid file path"}), 400
         

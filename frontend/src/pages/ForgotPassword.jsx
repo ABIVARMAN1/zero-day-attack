@@ -56,7 +56,7 @@ const ForgotPassword = () => {
                             </button>
                             
                             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                                <Link to="/login" style={{ color: '#00ffff', textDecoration: 'none' }}>Return to Login</Link>
+                                <Link to="/" style={{ color: '#00ffff', textDecoration: 'none' }}>Return to Login</Link>
                             </div>
                         </form>
                     </div>
