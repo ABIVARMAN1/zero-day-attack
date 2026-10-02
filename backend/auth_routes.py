@@ -25,12 +25,13 @@ def _is_production():
 def _set_auth_cookie(response, token):
     """Set the access_token cookie with correct attributes for the environment."""
     if _is_production():
-        # Cross-origin: requires SameSite=None + Secure
+        # Cross-origin: requires SameSite=None + Secure + Partitioned for modern browsers (CHIPS)
         response.set_cookie(
             'access_token', token,
             httponly=True,
             secure=True,
             samesite='None',
+            partitioned=True,
             max_age=7200,  # 2 hours
             path='/',
         )
@@ -51,6 +52,7 @@ def _delete_auth_cookie(response):
             httponly=True,
             secure=True,
             samesite='None',
+            partitioned=True,
             max_age=0,
             path='/',
         )

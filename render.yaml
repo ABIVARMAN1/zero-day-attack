@@ -13,9 +13,9 @@ services:
       - key: MONGODB_URI
         sync: false   # Set manually in Render dashboard
       - key: FRONTEND_URL
-        value: https://zero-day-attack-frontend.onrender.com # Adjust if actual URL is different
+        value: https://zero-day-attack-3.onrender.com # Adjust if actual URL is different
       - key: ALLOWED_ORIGINS
-        value: https://zero-day-attack-frontend.onrender.com
+        value: https://zero-day-attack-3.onrender.com
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: FLASK_ENV
