@@ -1,24 +1,41 @@
 services:
   # ─── Backend: Flask Web Service ──────────────────────────────────────────────
   - type: web
-    name: zero-day-backend
+    name: zero-day-attack-backend
     runtime: python
     rootDir: .
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class=gthread --threads=2 --workers=1 --bind=0.0.0.0:$PORT --timeout=120 "backend.app:app"
+    startCommand: gunicorn backend.app:app --bind 0.0.0.0:$PORT
     plan: free
     envVars:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: MONGODB_URI
-        sync: false   # Set manually in Render dashboard (contains credentials)
+        sync: false   # Set manually in Render dashboard
       - key: FRONTEND_URL
-        value: https://zero-day-attack.vercel.app
+        value: https://zero-day-attack-frontend.onrender.com # Adjust if actual URL is different
       - key: ALLOWED_ORIGINS
-        value: https://zero-day-attack.vercel.app
+        value: https://zero-day-attack-frontend.onrender.com
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: FLASK_ENV
         value: production
     healthCheckPath: /api/health
     autoDeploy: true
+
+  # ─── Frontend: React Static Site ──────────────────────────────────────────────
+  - type: web
+    name: zero-day-attack-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Set manually to the actual backend Render URL
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

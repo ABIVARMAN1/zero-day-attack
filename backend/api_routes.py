@@ -271,8 +271,6 @@ def get_reports():
 @api_bp.route('/reports', methods=['POST'])
 @require_role(['admin', 'analyst'])
 def generate_report():
-    from reportlab.pdfgen import canvas
-    
     data = request.json or {}
     report_type = data.get('report_type')
     timeframe = data.get('timeframe')
@@ -281,24 +279,6 @@ def generate_report():
         return jsonify({"error": "report_type and timeframe are required"}), 400
         
     title = f"{report_type} - {timeframe}"
-    
-    import uuid
-    reports_dir = os.path.join(os.path.dirname(__file__), 'reports', 'generated')
-    os.makedirs(reports_dir, exist_ok=True)
-    
-    filename = f"report_{uuid.uuid4().hex[:8]}.pdf"
-    filepath = os.path.join(reports_dir, filename)
-    
-    try:
-        c = canvas.Canvas(filepath)
-        c.drawString(100, 750, f"ZeroDayAI - {title}")
-        c.drawString(100, 730, f"Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        c.drawString(100, 700, "This is an automatically generated SOC report.")
-        c.save()
-    except Exception as e:
-        print(f"PDF error: {e}")
-        return jsonify({"error": "REPORT_GENERATION_FAILED", "message": "PDF generation service unavailable."}), 500
-
     now = datetime.now().isoformat()
     
     if _USE_MONGO:
@@ -309,7 +289,7 @@ def generate_report():
             "generated_by": str(request.user_id),
             "created_at": now,
             "parameters": timeframe,
-            "content": filename,
+            "content": "generated_on_the_fly",
         })
         report_id = str(result.inserted_id)
     else:
@@ -318,7 +298,7 @@ def generate_report():
         cursor.execute('''
             INSERT INTO reports (report_type, title, generated_by, created_at, parameters, content)
             VALUES (?, ?, ?, datetime('now'), ?, ?)
-        ''', (report_type, title, request.user_id, timeframe, filename))
+        ''', (report_type, title, request.user_id, timeframe, "generated_on_the_fly"))
         conn.commit()
         report_id = cursor.lastrowid
         conn.close()
@@ -335,32 +315,38 @@ def download_report(report_id):
             row = coll.find_one({"_id": ObjectId(report_id)})
         except Exception:
             row = coll.find_one({"_id": report_id})
+    else:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM reports WHERE id = ?", (report_id,))
+        row = cursor.fetchone()
+        if row:
+            row = dict(row)
+        conn.close()
         
-        if not row:
-            return jsonify({"error": "Report not found"}), 404
+    if not row:
+        return jsonify({"error": "Report not found"}), 404
         
-        # Handle both legacy absolute paths and new relative filenames
-        stored_content = row.get('content', '') if _USE_MONGO else row['content']
-        title = row.get('title', 'report') if _USE_MONGO else row['title']
-        
-        import os
-        from pathlib import Path
-        reports_dir = os.path.join(os.path.dirname(__file__), 'reports', 'generated')
-        
-        # If it's already an absolute path (legacy), we might try to extract the filename
-        # A safer production approach: always extract filename and rebuild path locally
-        filename = os.path.basename(stored_content)
-        filepath = os.path.join(reports_dir, filename)
-        
-    if not filepath or not os.path.exists(filepath):
-        return jsonify({"error": "Report file not found"}), 404
-        
-    # Prevent path traversal
-    if not os.path.abspath(filepath).startswith(os.path.abspath(reports_dir)):
-        return jsonify({"error": "Invalid file path"}), 400
+    title = row.get('title', 'report') if _USE_MONGO else row['title']
+    created_at = row.get('created_at', datetime.now().isoformat()) if _USE_MONGO else row['created_at']
+    
+    from reportlab.pdfgen import canvas
+    from io import BytesIO
+    
+    try:
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer)
+        c.drawString(100, 750, f"ZeroDayAI - {title}")
+        c.drawString(100, 730, f"Generated at: {created_at}")
+        c.drawString(100, 700, "This is an automatically generated SOC report.")
+        c.save()
+        buffer.seek(0)
+    except Exception as e:
+        print(f"PDF error: {e}")
+        return jsonify({"error": "REPORT_GENERATION_FAILED", "message": "PDF generation service unavailable."}), 500
         
     safe_filename = title.replace(' ', '_').replace('/', '_') + ".pdf"
-    return send_file(filepath, as_attachment=True, download_name=safe_filename)
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name=safe_filename)
 
 @api_bp.route('/notifications', methods=['GET'])
 @require_auth

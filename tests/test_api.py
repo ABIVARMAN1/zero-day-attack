@@ -61,3 +61,30 @@ def test_upload_valid_file(client, monkeypatch):
     res_data = response.get_json()
     assert 'total_records' in res_data
     assert 'results' in res_data
+
+def test_report_generation(client):
+    # 1. Authenticated request (client fixture handles auth)
+    # 2. Correct report endpoint
+    # 3. Valid payload
+    payload = {
+        "report_type": "Executive Summary (Weekly)",
+        "timeframe": "Last 7 Days"
+    }
+    
+    # Generate report
+    post_res = client.post('/api/reports', json=payload)
+    # 4. HTTP success status
+    assert post_res.status_code == 200
+    res_data = post_res.get_json()
+    assert res_data['success'] is True
+    assert 'report_id' in res_data
+    
+    report_id = res_data['report_id']
+    
+    # Download report
+    get_res = client.get(f'/api/reports/{report_id}/download')
+    assert get_res.status_code == 200
+    # 5. Content-Type is application/pdf
+    assert get_res.content_type == 'application/pdf'
+    # 6. Response contains PDF bytes
+    assert get_res.data.startswith(b'%PDF-')

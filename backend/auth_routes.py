@@ -25,7 +25,7 @@ def _is_production():
 def _set_auth_cookie(response, token):
     """Set the access_token cookie with correct attributes for the environment."""
     if _is_production():
-        # Cross-origin (Vercel → Render): requires SameSite=None + Secure
+        # Cross-origin: requires SameSite=None + Secure
         response.set_cookie(
             'access_token', token,
             httponly=True,

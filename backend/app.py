@@ -27,7 +27,7 @@ from backend.database.auth_db import create_user, get_user_by_email
 app = Flask(__name__)
 
 # ─── CORS Configuration ───────────────────────────────────────────────────────
-# In production, restrict to the actual Vercel frontend origin.
+# In production, restrict to the actual Render frontend origin.
 # Credentialed requests (cookies) REQUIRE a specific origin, not wildcard '*'.
 _frontend_origin = os.environ.get('FRONTEND_URL', '').strip()
 _allowed_origins = os.environ.get('ALLOWED_ORIGINS', '').strip()
@@ -38,9 +38,7 @@ if bool(os.environ.get("MONGODB_URI")) or os.environ.get("FLASK_ENV") == "produc
         origins_list.append(_frontend_origin)
     if _allowed_origins:
         origins_list.extend([o.strip() for o in _allowed_origins.split(',') if o.strip()])
-    
-    if "https://zero-day-attack.vercel.app" not in origins_list:
-        origins_list.append("https://zero-day-attack.vercel.app")
+
     
     CORS(app,
          supports_credentials=True,
